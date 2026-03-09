@@ -134,8 +134,16 @@ COPY <<'ENTRYPOINT' /usr/local/bin/entrypoint.sh
 #!/bin/sh
 set -e
 
-# Start Fabric Go API in background
-/usr/local/bin/fabric --serve > /var/log/fabric-api.log 2>&1 &
+# Ensure fabric config directory exists
+mkdir -p /root/.config/fabric
+
+# Start Fabric Go API in background with auto-restart
+(while true; do
+    echo "[$(date)] Starting Fabric API..." >> /var/log/fabric-api.log
+    /usr/local/bin/fabric --serve >> /var/log/fabric-api.log 2>&1
+    echo "[$(date)] Fabric API exited, restarting in 5s..." >> /var/log/fabric-api.log
+    sleep 5
+done) &
 
 # Start SvelteKit Node server in background
 PORT=3000 HOST=127.0.0.1 FABRIC_BASE_URL=http://127.0.0.1:8080 \

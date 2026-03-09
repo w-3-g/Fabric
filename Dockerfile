@@ -79,7 +79,7 @@ server {
 
     # API routes → Go backend
     location /api/ {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8080/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -90,28 +90,28 @@ server {
     }
 
     location /patterns/ {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8080/;
         proxy_set_header Host $host;
         proxy_read_timeout 900s;
     }
 
     location /models/ {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8080/;
         proxy_set_header Host $host;
     }
 
     location /sessions/ {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8080/;
         proxy_set_header Host $host;
     }
 
     location /contexts/ {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8080/;
         proxy_set_header Host $host;
     }
 
     location /swagger/ {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8080/;
         proxy_set_header Host $host;
     }
 

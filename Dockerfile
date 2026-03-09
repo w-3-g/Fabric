@@ -56,11 +56,10 @@ LABEL org.opencontainers.image.description="Fabric full-stack: Go API + SvelteKi
 RUN apk add --no-cache \
     ca-certificates \
     yt-dlp \
+    git \
     nginx \
     nodejs \
-    supervisor \
-    && mkdir -p /root/.config/fabric \
-    && mkdir -p /var/log/supervisor
+    && mkdir -p /root/.config/fabric
 
 # Copy Go binary
 COPY --from=go-builder /fabric /usr/local/bin/fabric
@@ -130,43 +129,23 @@ server {
 }
 NGINX_CONF
 
-# Supervisord config to manage all 3 processes
-COPY <<'SUPERVISOR_CONF' /etc/supervisord.conf
-[supervisord]
-nodaemon=true
-logfile=/var/log/supervisor/supervisord.log
-pidfile=/var/run/supervisord.pid
+# Entrypoint script — starts all 3 services
+COPY <<'ENTRYPOINT' /usr/local/bin/entrypoint.sh
+#!/bin/sh
+set -e
 
-[program:fabric-api]
-command=/usr/local/bin/fabric --serve
-autostart=true
-autorestart=true
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
+# Start Fabric Go API in background
+/usr/local/bin/fabric --serve > /var/log/fabric-api.log 2>&1 &
 
-[program:sveltekit]
-command=node /app/web/index.js
-directory=/app
-environment=PORT="3000",HOST="127.0.0.1",FABRIC_BASE_URL="http://127.0.0.1:8080"
-autostart=true
-autorestart=true
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
+# Start SvelteKit Node server in background
+PORT=3000 HOST=127.0.0.1 FABRIC_BASE_URL=http://127.0.0.1:8080 \
+    node /app/web/index.js > /var/log/sveltekit.log 2>&1 &
 
-[program:nginx]
-command=nginx -g "daemon off;"
-autostart=true
-autorestart=true
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
-SUPERVISOR_CONF
+# Start Nginx in foreground (keeps container alive)
+exec nginx -g "daemon off;"
+ENTRYPOINT
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
 
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["/usr/local/bin/entrypoint.sh"]

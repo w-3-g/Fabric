@@ -61,6 +61,11 @@ RUN apk add --no-cache \
     nodejs \
     && mkdir -p /root/.config/fabric
 
+# Copy bundled patterns and strategies (avoids git clone on startup)
+COPY data/patterns /root/.config/fabric/patterns
+COPY data/strategies /root/.config/fabric/strategies
+COPY data/unique_patterns.txt /root/.config/fabric/unique_patterns.txt
+
 # Copy Go binary
 COPY --from=go-builder /fabric /usr/local/bin/fabric
 

@@ -137,6 +137,29 @@ set -e
 # Ensure fabric config directory exists
 mkdir -p /root/.config/fabric
 
+# Generate .env from Docker environment variables if it doesn't exist
+if [ ! -f /root/.config/fabric/.env ]; then
+    echo "Generating /root/.config/fabric/.env from environment variables..."
+    cat > /root/.config/fabric/.env <<EOF
+DEFAULT_VENDOR=${DEFAULT_VENDOR:-OpenAI}
+DEFAULT_MODEL=${DEFAULT_MODEL:-gpt-4o-mini}
+DEFAULT_MODEL_CONTEXT_LENGTH=${DEFAULT_MODEL_CONTEXT_LENGTH:-128000}
+PATTERNS_LOADER_GIT_REPO_URL=${PATTERNS_LOADER_GIT_REPO_URL:-https://github.com/danielmiessler/fabric.git}
+PATTERNS_LOADER_GIT_REPO_PATTERNS_FOLDER=${PATTERNS_LOADER_GIT_REPO_PATTERNS_FOLDER:-data/patterns}
+PROMPT_STRATEGIES_GIT_REPO_URL=${PROMPT_STRATEGIES_GIT_REPO_URL:-https://github.com/danielmiessler/fabric.git}
+PROMPT_STRATEGIES_GIT_REPO_STRATEGIES_FOLDER=${PROMPT_STRATEGIES_GIT_REPO_STRATEGIES_FOLDER:-data/strategies}
+EOF
+    # Append any API key env vars
+    [ -n "$OPENAI_API_KEY" ] && echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> /root/.config/fabric/.env
+    [ -n "$ANTHROPIC_API_KEY" ] && echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> /root/.config/fabric/.env
+    [ -n "$GEMINI_API_KEY" ] && echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> /root/.config/fabric/.env
+    [ -n "$OLLAMA_API_URL" ] && echo "OLLAMA_API_URL=$OLLAMA_API_URL" >> /root/.config/fabric/.env
+    [ -n "$GROQ_API_KEY" ] && echo "GROQ_API_KEY=$GROQ_API_KEY" >> /root/.config/fabric/.env
+    [ -n "$MISTRAL_API_KEY" ] && echo "MISTRAL_API_KEY=$MISTRAL_API_KEY" >> /root/.config/fabric/.env
+    echo "Generated .env:"
+    cat /root/.config/fabric/.env
+fi
+
 # Start Fabric Go API in background with auto-restart
 (while true; do
     echo "[$(date)] Starting Fabric API..." >> /var/log/fabric-api.log
